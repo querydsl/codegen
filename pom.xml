@@ -69,8 +69,20 @@
       <version>1.0.CR3</version>
       <scope>test</scope>
     </dependency>
-    
-            
+    <dependency>
+      <groupId>org.jetbrains.kotlin</groupId>
+      <artifactId>kotlin-maven-plugin</artifactId>
+      <version>1.0.1-2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+      <version>3.4</version>
+      <scope>test</scope>
+    </dependency>
+
+
   </dependencies>
   
   <build>
