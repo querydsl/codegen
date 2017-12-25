@@ -50,7 +50,7 @@ public enum TypeCategory {
     /**
      *
      */
-    COMPARABLE(SIMPLE),
+    COMPARABLE(SIMPLE, java.util.UUID.class.getName()),
     /**
      *
      */
