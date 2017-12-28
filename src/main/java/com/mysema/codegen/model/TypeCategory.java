@@ -50,7 +50,7 @@ public enum TypeCategory {
     /**
      *
      */
-    COMPARABLE(SIMPLE, java.util.UUID.class.getName()),
+    COMPARABLE(SIMPLE),
     /**
      *
      */
@@ -93,7 +93,12 @@ public enum TypeCategory {
      *
      */
     TIME(COMPARABLE, java.sql.Time.class.getName(), "org.joda.time.LocalTime",
-            "java.time.LocalTime", "java.time.OffsetTime");
+            "java.time.LocalTime", "java.time.OffsetTime"),
+
+    /**
+     *
+     */
+    UUID(COMPARABLE, java.util.UUID.class.getName());
 
     private final TypeCategory superType;
 
