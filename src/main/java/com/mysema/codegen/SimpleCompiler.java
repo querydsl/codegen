@@ -14,6 +14,7 @@
 package com.mysema.codegen;
 
 import java.io.*;
+import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.URLDecoder;
@@ -68,6 +69,11 @@ public class SimpleCompiler implements JavaCompiler {
                 ClassLoader c = cl;
                 while (c instanceof URLClassLoader) {
                     for (URL url : ((URLClassLoader)c).getURLs()) {
+                        if (url.openConnection() instanceof JarURLConnection) {
+                            // extract the file URL from the jar URL
+                            JarURLConnection connection = (JarURLConnection) url.openConnection();
+                            url = connection.getJarFileURL();
+                        }
                         String decodedPath = URLDecoder.decode(url.getPath(), "UTF-8");
                         paths.add(new File(decodedPath).getAbsolutePath());
                     }
