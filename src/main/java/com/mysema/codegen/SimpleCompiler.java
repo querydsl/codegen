@@ -1,10 +1,12 @@
 /*
- * Copyright 2010, Mysema Ltd
- * 
+ * Copyright 2018, The Querydsl Team (http://www.querydsl.com/team)
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,10 +16,7 @@
 package com.mysema.codegen;
 
 import java.io.*;
-import java.net.JarURLConnection;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.net.URLDecoder;
+import java.net.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -70,16 +69,15 @@ public class SimpleCompiler implements JavaCompiler {
                 while (c instanceof URLClassLoader) {
                     for (URL url : ((URLClassLoader)c).getURLs()) {
                         if (url.openConnection() instanceof JarURLConnection) {
-                            // extract the file URL from the jar URL
-                            JarURLConnection connection = (JarURLConnection) url.openConnection();
-                            url = connection.getJarFileURL();
+                            paths.add(url.toString());
+                        } else {
+                            String decodedPath = URLDecoder.decode(url.getPath(), "UTF-8");
+                            paths.add(new File(decodedPath).getAbsolutePath());
                         }
-                        String decodedPath = URLDecoder.decode(url.getPath(), "UTF-8");
-                        paths.add(new File(decodedPath).getAbsolutePath());
                     }
                     c = c.getParent();
                 }
-            }            
+            }
             return pathJoiner.join(paths);
         } catch (UnsupportedEncodingException e) {
             throw new CodegenException(e);

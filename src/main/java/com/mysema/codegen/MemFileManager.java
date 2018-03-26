@@ -1,10 +1,12 @@
 /*
- * Copyright 2010, Mysema Ltd
- * 
+ * Copyright 2018, The Querydsl Team (http://www.querydsl.com/team)
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,6 +45,8 @@ public class MemFileManager extends ForwardingJavaFileManager<JavaFileManager> {
 
     private final String urlPrefix;
 
+    private final JavaClassesFinder finder;
+
     public MemFileManager(ClassLoader parent, StandardJavaFileManager sjfm) {
         super(sjfm);
         ramFileSystem = new HashMap<LocationAndKind, Map<String, JavaFileObject>>();
@@ -51,6 +55,7 @@ public class MemFileManager extends ForwardingJavaFileManager<JavaFileManager> {
                 classLoaderContent);
         classLoader = new MemClassLoader(parent, ramFileSystem);
         urlPrefix = MemFileSystemRegistry.DEFAULT.getUrlPrefix(this);
+        finder = new JavaClassesFinder(classLoader);
     }
 
     @Override
@@ -117,6 +122,8 @@ public class MemFileManager extends ForwardingJavaFileManager<JavaFileManager> {
         String result;
         if (loc == StandardLocation.CLASS_PATH && javaFileObject instanceof MemJavaFileObject) {
             result = javaFileObject.getName();
+        } else if (javaFileObject instanceof CompiledJavaFileObject) {
+            result = ((CompiledJavaFileObject) javaFileObject).binaryName();
         } else {
             result = super.inferBinaryName(loc, javaFileObject);
         }
@@ -133,9 +140,27 @@ public class MemFileManager extends ForwardingJavaFileManager<JavaFileManager> {
             boolean recurse) throws IOException {
 
         List<JavaFileObject> result = new ArrayList<JavaFileObject>();
-        for (JavaFileObject f : super.list(location, pkg, kinds, recurse)) {
-            result.add(f);
+
+        if (location == StandardLocation.PLATFORM_CLASS_PATH) {
+            // let standard manager handle
+            return super.list(location, pkg, kinds, recurse);
+        } else if (location == StandardLocation.CLASS_PATH && kinds.contains(JavaFileObject.Kind.CLASS)) {
+            for (JavaFileObject f : super.list(location, pkg, kinds, recurse)) {
+                result.add(f);
+            }
+            // app specific classes are here
+            result.addAll(finder.listAll(pkg));
         }
+
+        // here we add to the results the classes that Codegen has generated and has put in memory
+        result.addAll(addInMemoryClasses(location, pkg, kinds, recurse));
+
+        return result;
+    }
+
+    private List<JavaFileObject> addInMemoryClasses(Location location, String pkg, Set<Kind> kinds, boolean recurse) {
+        List<JavaFileObject> result = new ArrayList<JavaFileObject>();
+
         if (location == StandardLocation.CLASS_PATH) {
             location = StandardLocation.CLASS_OUTPUT;
         }
@@ -145,21 +170,30 @@ public class MemFileManager extends ForwardingJavaFileManager<JavaFileManager> {
             if (ramFileSystem.containsKey(key)) {
                 Map<String, JavaFileObject> locatedFiles = ramFileSystem.get(key);
                 for (Map.Entry<String, JavaFileObject> entry : locatedFiles.entrySet()) {
-                    String name = entry.getKey();
-                    String packageName = "";
-                    if (name.indexOf('.') > -1) {
-                        packageName = name.substring(0, name.lastIndexOf('.'));
-                    }
-                    if (recurse ? packageName.startsWith(pkg) : packageName.equals(pkg)) {
-                        JavaFileObject candidate = entry.getValue();
-                        if (kinds.contains(candidate.getKind())) {
-                            result.add(candidate);
-                        }
+                    JavaFileObject processedFile = processLocatedFile(pkg, kinds, recurse, entry);
+                    if (processedFile != null) {
+                        result.add(processedFile);
                     }
                 }
             }
         }
+
         return result;
+    }
+
+    private JavaFileObject processLocatedFile(String pkg, Set<Kind> kinds, boolean recurse, Map.Entry<String, JavaFileObject> entry) {
+        String name = entry.getKey();
+        String packageName = "";
+        if (name.indexOf('.') > -1) {
+            packageName = name.substring(0, name.lastIndexOf('.'));
+        }
+        if (recurse ? packageName.startsWith(pkg) : packageName.equals(pkg)) {
+            JavaFileObject candidate = entry.getValue();
+            if (kinds.contains(candidate.getKind())) {
+                return candidate;
+            }
+        }
+        return null;
     }
 
     private void register(LocationAndKind key, JavaFileObject javaFileObject) {
