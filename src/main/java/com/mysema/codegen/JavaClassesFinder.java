@@ -32,20 +32,23 @@ import static javax.tools.JavaFileObject.Kind.CLASS;
 /**
  * JavaClassesFinder finds Java file classes using the specified Classloader
  *
- * @author <a href="mailto:matteo.gallo@britebill.com">Matteo Gallo</a>
+ * NOTE: This is a derivative work from an article of atamur.
+ *  Original article can be found here: http://atamur.blogspot.com/2009/10/using-built-in-javacompiler-with-custom.html
+ *
+ * @author matteo-gallo-bb
  */
 class JavaClassesFinder {
 
     private ClassLoader classLoader;
 
-    public JavaClassesFinder(ClassLoader classLoader) {
+    JavaClassesFinder(ClassLoader classLoader) {
         this.classLoader = classLoader;
     }
 
     /**
      * List all the Java file classes that are present in the specified package.
      *
-     * @param packageName the package name where to
+     * @param packageName
      * @return a list of Java file classes
      * @throws IOException
      */
