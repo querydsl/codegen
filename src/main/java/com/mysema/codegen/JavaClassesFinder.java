@@ -83,7 +83,7 @@ class JavaClassesFinder {
         try {
             JarURLConnection jarConn = (JarURLConnection) packageFolderURL.openConnection();
             String jarUri = jarConn.getJarFileURL().toString();
-            String rootEntryName = jarConn.getEntryName();
+            String rootEntryName = jarConn.getEntryName() != null ? jarConn.getEntryName() : "";
             int rootEnd = rootEntryName.length() + 1;
 
             Enumeration<JarEntry> entryEnum = jarConn.getJarFile().entries();
