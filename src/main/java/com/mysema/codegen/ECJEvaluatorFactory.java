@@ -62,7 +62,12 @@ public class ECJEvaluatorFactory extends AbstractEvaluatorFactory {
     
     public static CompilerOptions getDefaultCompilerOptions() {
         String javaSpecVersion = System.getProperty("java.specification.version");
-        if (javaSpecVersion.equals("1.8")) {
+        if (javaSpecVersion.equals("1.8")
+                || javaSpecVersion.equals("9")
+                || javaSpecVersion.equals("10")
+                || javaSpecVersion.equals("11")
+                || javaSpecVersion.equals("12"))
+        {
             javaSpecVersion = "1.7";
         }
         Map<String, Object> settings = Maps.newHashMap();
